@@ -13,7 +13,7 @@ Here's how you can do it using the `sqlite3` command-line tool:
 ``` 
 bash
    sqlite3 checked_files.db "SELECT filepath FROM checked_files;"
-
+``` 
 
 
 This command will display all file paths that have been recorded in the `checked_files` table, meaning these are the files that have already been processed by your script.
