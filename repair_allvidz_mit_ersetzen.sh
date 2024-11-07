@@ -1,0 +1,2 @@
+find . -type f \( -iname "*.mp4" -o -iname "*.avi" -o -iname "*.mov" -o -iname "*.mkv" -o -iname "*.flv" -o -iname "*.wmv" -o -iname "*.m4v" -o -iname "*.mpg" -o -iname "*.mpeg" -o -iname "*.3gp" -o -iname "*.webm" -o -iname "*.vob" -o -iname "*.ogv" \) -exec sh -c 'for file; do tmpfile="${file%.*}_repaired.mp4"; ffmpeg -err_detect ignore_err -i "$file" -c:v libx264 -c:a aac -strict experimental -y "$tmpfile" && mv "$tmpfile" "$file"; done' sh {} +
+
