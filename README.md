@@ -10,6 +10,7 @@ Here's how you can do it using the `sqlite3` command-line tool:
 
 2. Run the following command, replacing `checked_files.db` with the path to your SQLite database file if it is not in the current directory:
 
+markdown
 „„„   
 bash
    sqlite3 checked_files.db "SELECT filepath FROM checked_files;"
