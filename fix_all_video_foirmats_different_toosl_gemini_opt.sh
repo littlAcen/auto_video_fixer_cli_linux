@@ -1,5 +1,25 @@
 #!/bin/bash
 
+# --- Script Description ---
+# This script attempts to repair corrupted video files using a variety of tools.
+# It checks for required tools, processes video files in the './videos' directory,
+# and saves repaired files to the './repaired' directory.
+# Detailed logs are saved in './repaired/repair.log'.
+#
+# Script finished. Check '$LOG_FILE' for detailed logs.
+#
+# One-line installation of required tools (Debian/Ubuntu):
+#   sudo apt-get update && sudo apt-get install -y divfix++ ffmpeg gpac mencoder handbrake-cli gstreamer1.0-tools avidemux3-cli mlt
+#
+# One-line installation of required tools (macOS using Homebrew):
+#   brew install divfix++ ffmpeg gpac mplayer handbrake gstreamer avidemux mlt
+#
+# Note: These are example commands. Package names or installation methods might vary
+#       depending on your specific operating system and package manager.
+#       It's recommended to install tools individually and check for errors if the
+#       one-liner fails. See script comments or documentation for details.
+
+
 # --- Improved Tool Installation Check and Instructions ---
 REQUIRED_TOOLS=(divfix++ ffmpeg mp4box mencoder handbrakecli gst-launch-1.0 avidemux_cli melt) # Added gstreamer, avidemux, melt
 TOOL_INSTALL_INSTRUCTIONS=(
@@ -11,6 +31,9 @@ TOOL_INSTALL_INSTRUCTIONS=(
   "gst-launch-1.0: sudo apt-get install gstreamer1.0-tools (Debian/Ubuntu) or brew install gstreamer (macOS)" # gstreamer install instructions
   "avidemux_cli: sudo apt-get install avidemux3-cli (Debian/Ubuntu) or brew install avidemux (macOS - may need to build from source for CLI)" # avidemux install instructions - macOS might be more complex
   "melt: sudo apt-get install mlt (Debian/Ubuntu) or brew install mlt (macOS)" # mlt install instructions
+Install all tools together with:
+Debian/Ubuntu Command: sudo apt-get update && sudo apt-get install -y divfix++ ffmpeg gpac mencoder handbrake-cli gstreamer1.0-tools avidemux3-cli mlt
+MacOS: brew install divfix++ ffmpeg gpac mplayer handbrake gstreamer avidemux mlt
 )
 
 MISSING_TOOLS=()
