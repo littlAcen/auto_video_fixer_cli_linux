@@ -1,6 +1,76 @@
 #!/bin/bash
 set -euo pipefail  # Strikte Fehlerbehandlung
 
+generate_install_instructions() {
+    local instructions=""
+    instructions+="# Installationsanweisungen für fehlende Tools:\n"
+    instructions+="# ---------------------------------------\n"
+    for tool_spec in "${REQUIRED_TOOLS[@]}"; do
+        local tool=${tool_spec%%:*}
+        local package=${tool_spec#*:}
+        [[ "$tool" == "$package" ]] && package=$tool
+
+        local ubuntu_command=""
+        local macos_command=""
+
+        case "$package" in
+            "divfix++")
+                ubuntu_command="sudo apt-get install divfix++"
+                macos_command="brew install divfix++"
+                ;;
+            "ffmpeg")
+                ubuntu_command="sudo apt-get install ffmpeg"
+                macos_command="brew install ffmpeg"
+                ;;
+            "gpac") # mp4box package
+                ubuntu_command="sudo apt-get install gpac"
+                macos_command="brew install gpac"
+                ;;
+            "mplayer") # mencoder package
+                ubuntu_command="sudo apt-get install mencoder" # Or mplayer package? check.
+                macos_command="brew install mplayer" # or mencoder?
+                ;;
+            "handbrake-cli")
+                ubuntu_command="sudo apt-get install handbrake-cli"
+                macos_command="brew install handbrake"
+                ;;
+            "gstreamer1.0-tools")
+                ubuntu_command="sudo apt-get install gstreamer1.0-tools"
+                macos_command="brew install gstreamer"
+                ;;
+            "mlt")
+                ubuntu_command="sudo apt-get install mlt"
+                macos_command="brew install mlt"
+                ;;
+             *) # Default case or "avidemux3-cli" - adjust if needed for more specific avidemux instructions
+                ubuntu_command="# Für ${package} spezifische Ubuntu Installation prüfen"
+                macos_command="# Für ${package} spezifische macOS Installation prüfen"
+                ;;
+        esac
+
+        instructions+="# ${tool}:\n"
+        if [[ -n "$ubuntu_command" ]]; then
+            instructions+="  # Ubuntu/Debian: ${ubuntu_command}\n"
+        fi
+        if [[ -n "$macos_command" ]]; then
+            instructions+="  # macOS: ${macos_command}\n"
+        fi
+    done
+
+    # --- Add Combined Installation Commands ---
+    instructions+="\n"  # Add a newline for separation
+    instructions+="# ---------------------------------------\n"
+    instructions+="# ### Installiere alle Tools zusammen:\n"
+    instructions+="# Ubuntu/Debian Befehl:\n"
+    instructions+="# sudo apt-get update && sudo apt-get install -y divfix++ ffmpeg gpac mencoder handbrake-cli gstreamer1.0-tools avidemux3-cli mlt\n"
+    instructions+="# macOS Befehl:\n"
+    instructions+="# brew install divfix++ ffmpeg gpac mplayer handbrake gstreamer avidemux mlt\n"
+    instructions+="# ---------------------------------------\n"
+
+
+    return 0 # Function itself always succeeds, returns instructions string via stdout
+}
+
 # --- Script Description ---
 # Video-Reparatur-Script mit erweiterten Sicherheits- und Fehlerbehandlungsfunktionen
 # Verwendet verschiedene Tools zur Reparatur beschädigter Videodateien
