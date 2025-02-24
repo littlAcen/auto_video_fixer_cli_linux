@@ -110,124 +110,116 @@ repair_mp4() {
 }
 
 repair_general() { # General repair function trying multiple tools
-    local input_file="$1"
-    local output_file="$OUTPUT_DIR/${input_file##*/}_fixed.mkv" # Default output to MKV for general repair
-    local temp_output="${input_file}.repair_temp.mp4" # Temp file for tools that might require it
+    local input_file="$1"
+    local output_file="$OUTPUT_DIR/${input_file##*/}_fixed.mkv" # Default output to MKV for general repair
+    local temp_output="${input_file}.repair_temp.mp4" # Temp file for tools that might require it
 
-    # 1. ffmpeg (Remux and error detection)
-    echo "$(date) - General Repair: Attempting ffmpeg remux..." >> "$LOG_FILE"
-    if ffmpeg -err_detect ignore_err -i "$input_file" -c copy -y "$temp_output" 2>>"$LOG_FILE"; then
-        if [[ -s "$temp_output" ]]; then
-            mv "$temp_output" "$output_file"
-            echo "$(date) - General Repair: ffmpeg remux successful." >> "$LOG_FILE"
-            echo "General: ffmpeg remux successful."
-            return 0 # Success
-        fi
-    fi
+    # 1. ffmpeg (Remux and error detection)
+    echo "$(date) - General Repair: Attempting ffmpeg remux..." >> "$LOG_FILE"
+    if ffmpeg -err_detect ignore_err -i "$input_file" -c copy -y "$temp_output" 2>>"$LOG_FILE"; then
+        if [[ -s "$temp_output" ]]; then
+            mv "$temp_output" "$output_file"
+            echo "$(date) - General Repair: ffmpeg remux successful." >> "$LOG_FILE"
+            echo "General: ffmpeg remux successful."
+            # return 0  <-- REMOVED return 0 here
+        fi
+    fi
 
-    # 2. mencoder (Index fixing)
-    echo "$(date) - General Repair: ffmpeg remux failed, trying mencoder..." >> "$LOG_FILE"
-    if command -v mencoder &>/dev/null; then
-        rm -f "$temp_output" # Cleanup temp file
-        if mencoder "$input_file" -ovc copy -oac copy -o "$temp_output" 2>>"$LOG_FILE"; then
-            if [[ -s "$temp_output" ]]; then
-                mv "$temp_output" "$output_file"
-                echo "$(date) - General Repair: mencoder repair successful." >> "$LOG_FILE"
-                echo "General: mencoder repair successful."
-                return 0 # Success
-            fi
-        fi
-    fi
+    # 2. mencoder (Index fixing)
+    echo "$(date) - General Repair: ffmpeg remux failed, trying mencoder..." >> "$LOG_FILE"
+    if command -v mencoder &>/dev/null; then
+        rm -f "$temp_output" # Cleanup temp file
+        if mencoder "$input_file" -ovc copy -oac copy -o "$temp_output" 2>>"$LOG_FILE"; then
+            if [[ -s "$temp_output" ]]; then
+                mv "$temp_output" "$output_file"
+                echo "$(date) - General Repair: mencoder repair successful." >> "$LOG_FILE"
+                echo "General: mencoder repair successful."
+                # return 0  <-- REMOVED return 0 here
+            fi
+        fi
+    fi
 
-    # 3. MP4Box (For potential MP4 container issues - though general, might help)
-    echo "$(date) - General Repair: mencoder failed, trying MP4Box -isma (MP4 container fix)..." >> "$LOG_FILE"
-    local mp4box_temp_output="${input_file}.mp4box_temp.mp4" # Separate temp for MP4Box to avoid conflicts
-    if MP4Box -isma "$input_file" -out "$mp4box_temp_output" 2>> "$LOG_FILE"; then
-        if [[ -s "$mp4box_temp_output" ]]; then
-            mv "$mp4box_temp_output" "$output_file"
-            echo "$(date) - General Repair: MP4Box repair successful." >> "$LOG_FILE"
-            echo "General: MP4Box repair successful."
-            rm -f "$temp_output" # Cleanup other temp file if it exists
-            return 0
-        fi
-    fi
-    rm -f "$mp4box_temp_output" # Cleanup MP4Box temp file
+    # 3. MP4Box (For potential MP4 container issues - though general, might help)
+    echo "$(date) - General Repair: mencoder failed, trying MP4Box -isma (MP4 container fix)..." >> "$LOG_FILE"
+    local mp4box_temp_output="${input_file}.mp4box_temp.mp4" # Separate temp for MP4Box to avoid conflicts
+    if MP4Box -isma "$input_file" -out "$mp4box_temp_output" 2>> "$LOG_FILE"; then
+        if [[ -s "$mp4box_temp_output" ]]; then
+            mv "$mp4box_temp_output" "$output_file"
+            echo "$(date) - General Repair: MP4Box repair successful." >> "$LOG_FILE"
+            echo "General: MP4Box repair successful."
+            # return 0  <-- REMOVED return 0 here
+        fi
+    fi
+    rm -f "$mp4box_temp_output" # Cleanup MP4Box temp file
 
-    # 4. HandBrakeCLI (Remuxing/re-encoding as fallback - using fast preset)
-    echo "$(date) - General Repair: MP4Box failed, trying HandBrakeCLI (remux/re-encode)..." >> "$LOG_FILE"
-    if command -v HandBrakeCLI &>/dev/null; then
-        rm -f "$temp_output" # Cleanup temp file
-        if HandBrakeCLI -i "$input_file" -o "$temp_output" --preset="Fast 1080p30" 2>>"$LOG_FILE"; then # Fast preset for speed
-            if [[ -s "$temp_output" ]]; then
-                mv "$temp_output" "$output_file"
-                echo "$(date) - General Repair: HandBrakeCLI repair successful." >> "$LOG_FILE"
-                echo "General: HandBrakeCLI repair successful."
-                return 0 # Success
-            fi
-        fi
-    fi
+    # 4. HandBrakeCLI (Remuxing/re-encoding as fallback - using fast preset)
+    echo "$(date) - General Repair: MP4Box failed, trying HandBrakeCLI (remux/re-encode)..." >> "$LOG_FILE"
+    if command -v HandBrakeCLI &>/dev/null; then
+        rm -f "$temp_output" # Cleanup temp file
+        if HandBrakeCLI -i "$input_file" -o "$temp_output" --preset="Fast 1080p30" 2>>"$LOG_FILE"; then # Fast preset for speed
+            if [[ -s "$temp_output" ]]; then
+                mv "$temp_output" "$output_file"
+                echo "$(date) - General Repair: HandBrakeCLI repair successful." >> "$LOG_FILE"
+                echo "General: HandBrakeCLI repair successful."
+                # return 0  <-- REMOVED return 0 here
+            fi
+        fi
+    fi
 
-    # 5. Avidemux CLI (Copy mode - potential container/stream fix - might be format specific)
-    echo "$(date) - General Repair: HandBrakeCLI failed, trying Avidemux CLI (copy mode)..." >> "$LOG_FILE"
-    local avidemux_temp_output="${input_file}.avidemux_temp.${output_file##*.}" # Match output extension to final output
-    if avidemux_cli --force-alt-h264 --load "$input_file" --video-codec copy --audio-codec copy --muxer mkv --output-file "$avidemux_temp_output" --run quit 2>>"$LOG_FILE"; then # Example: MKV output, adjust muxer as needed
-        if [[ -s "$avidemux_temp_output" ]]; then
-            mv "$avidemux_temp_output" "$output_file"
-            echo "$(date) - General Repair: Avidemux CLI repair successful." >> "$LOG_FILE"
-            echo "General: Avidemux CLI repair successful."
-            rm -f "$temp_output" # Cleanup other temp files
-            rm -f "$mp4box_temp_output"
-            return 0
-        fi
-    fi
-    rm -f "$avidemux_temp_output" # Cleanup Avidemux temp file
+    # 5. Avidemux CLI (Copy mode - potential container/stream fix - might be format specific)
+    echo "$(date) - General Repair: HandBrakeCLI failed, trying Avidemux CLI (copy mode)..." >> "$LOG_FILE"
+    local avidemux_temp_output="${input_file}.avidemux_temp.${output_file##*.}" # Match output extension to final output
+    if avidemux_cli --force-alt-h264 --load "$input_file" --video-codec copy --audio-codec copy --muxer mkv --output-file "$avidemux_temp_output" --run quit 2>>"$LOG_FILE"; then # Example: MKV output, adjust muxer as needed
+        if [[ -s "$avidemux_temp_output" ]]; then
+            mv "$avidemux_temp_output" "$output_file"
+            echo "$(date) - General Repair: Avidemux CLI repair successful." >> "$LOG_FILE"
+            echo "General: Avidemux CLI repair successful."
+            # return 0  <-- REMOVED return 0 here
+        fi
+        fi
+    fi
+    rm -f "$avidemux_temp_output" # Cleanup Avidemux temp file
 
 
-    # 6. GStreamer (Attempting a basic decode and encode pipeline - very general, might be slow/resource intensive)
-    echo "$(date) - General Repair: Avidemux CLI failed, trying GStreamer (basic pipeline)..." >> "$LOG_FILE"
-    local gst_temp_output="${input_file}.gst_temp.${output_file##*.}" # Match output extension
-    if gst-launch-1.0 filesrc location="$input_file" ! decodebin ! filesink location="$gst_temp_output" 2>>"$LOG_FILE"; then # Very basic pipeline - adjust pipeline for more control if needed
-        if [[ -s "$gst_temp_output" ]]; then
-            mv "$gst_temp_output" "$output_file"
-            echo "$(date) - General Repair: GStreamer repair successful." >> "$LOG_FILE"
-            echo "General: GStreamer repair successful."
-            rm -f "$temp_output" # Cleanup other temp files
-            rm -f "$mp4box_temp_output"
-            rm -f "$avidemux_temp_output"
-            return 0
-        fi
-    fi
-    rm -f "$gst_temp_output" # Cleanup GStreamer temp file
+    # 6. GStreamer (Attempting a basic decode and encode pipeline - very general, might be slow/resource intensive)
+    echo "$(date) - General Repair: Avidemux CLI failed, trying GStreamer (basic pipeline)..." >> "$LOG_FILE"
+    local gst_temp_output="${input_file}.gst_temp.${output_file##*.}" # Match output extension
+    if gst-launch-1.0 filesrc location="$input_file" ! decodebin ! filesink location="$gst_temp_output" 2>>"$LOG_FILE"; then # Very basic pipeline - adjust pipeline for more control if needed
+        if [[ -s "$gst_temp_output" ]]; then
+            mv "$gst_temp_output" "$output_file"
+            echo "$(date) - General Repair: GStreamer repair successful." >> "$LOG_FILE"
+            echo "General: GStreamer repair successful."
+            # return 0  <-- REMOVED return 0 here
+        fi
+        fi
+    fi
+    rm -f "$gst_temp_output" # Cleanup GStreamer temp file
 
 
-    # 7. MLT (melt) -  Basic remuxing attempt. MLT is more complex, basic use here. Might require more sophisticated MLT pipelines for advanced repair.
-    echo "$(date) - General Repair: GStreamer failed, trying MLT (melt - basic remux)..." >> "$LOG_FILE"
-    local melt_temp_output="${input_file}.melt_temp.${output_file##*.}" # Match output extension
-    if melt "$input_file" -consumer avformat:\"$melt_temp_output\" 2>>"$LOG_FILE"; then # Basic melt command, adjust consumer and format if needed
-        if [[ -s "$melt_temp_output" ]]; then
-            mv "$melt_temp_output" "$output_file"
-            echo "$(date) - General Repair: MLT (melt) repair successful." >> "$LOG_FILE"
-            echo "General: MLT (melt) repair successful."
-            rm -f "$temp_output" # Cleanup other temp files
-            rm -f "$mp4box_temp_output"
-            rm -f "$avidemux_temp_output"
-            rm -f "$gst_temp_output"
-            return 0
-        fi
-    fi
-    rm -f "$melt_temp_output" # Cleanup MLT temp file
+    # 7. MLT (melt) -  Basic remuxing attempt. MLT is more complex, basic use here. Might require more sophisticated MLT pipelines for advanced repair.
+    echo "$(date) - General Repair: GStreamer failed, trying MLT (melt - basic remux)..." >> "$LOG_FILE"
+    local melt_temp_output="${input_file}.melt_temp.${output_file##*.}" # Match output extension
+    if melt "$input_file" -consumer avformat:\"$melt_temp_output\" 2>>"$LOG_FILE"; then # Basic melt command, adjust consumer and format if needed
+        if [[ -s "$melt_temp_output" ]]; then
+            mv "$melt_temp_output" "$output_file"
+            echo "$(date) - General Repair: MLT (melt) repair successful." >> "$LOG_FILE"
+            echo "General: MLT (melt) repair successful."
+            # return 0  <-- REMOVED return 0 here
+        fi
+    fi
+    rm -f "$melt_temp_output" # Cleanup MLT temp file
 
 
-    # Final failure message if all attempts fail
-    rm -f "$temp_output" # Cleanup any remaining temp files
-    rm -f "$mp4box_temp_output"
-    rm -f "$avidemux_temp_output"
-    rm -f "$gst_temp_output"
-    rm -f "$melt_temp_output"
+    # Final failure message if all attempts fail
+    rm -f "$temp_output" # Cleanup any remaining temp files
+    rm -f "$mp4box_temp_output"
+    rm -f "$avidemux_temp_output"
+    rm -f "$gst_temp_output"
+    rm -f "$melt_temp_output"
 
-    echo "$(date) - General Repair: All repair attempts failed for '$input_file'." >> "$LOG_FILE"
-    echo "General: All repair attempts failed for '$input_file'."
-    return 1 # Failure
+    echo "$(date) - General Repair: All repair attempts failed for '$input_file'." >> "$LOG_FILE"
+    echo "General: All repair attempts failed for '$input_file'."
+    return 1 # Failure
 }
 
 
