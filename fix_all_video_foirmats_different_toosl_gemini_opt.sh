@@ -31,10 +31,15 @@ TOOL_INSTALL_INSTRUCTIONS=(
   "gst-launch-1.0: sudo apt-get install gstreamer1.0-tools (Debian/Ubuntu) or brew install gstreamer (macOS)" # gstreamer install instructions
   "avidemux_cli: sudo apt-get install avidemux3-cli (Debian/Ubuntu) or brew install avidemux (macOS - may need to build from source for CLI)" # avidemux install instructions - macOS might be more complex
   "melt: sudo apt-get install mlt (Debian/Ubuntu) or brew install mlt (macOS)" # mlt install instructions
-### Install all tools together with:
-# Debian/Ubuntu Command: sudo apt-get update && sudo apt-get install -y divfix++ ffmpeg gpac mencoder handbrake-cli gstreamer1.0-tools avidemux3-cli mlt
-# MacOS: brew install divfix++ ffmpeg gpac mplayer handbrake gstreamer avidemux mlt
-)
+# Script finished. Check '$LOG_FILE' for detailed logs.
+#
+# One-line installation of required tools (Debian/Ubuntu):
+# sudo apt-get update && sudo apt-get install -y divfix++ ffmpeg gpac mencoder handbrake-cli gstreamer1.0-tools avidemux3-cli mlt
+#
+# One-line installation of required tools (macOS using Homebrew):
+# brew install divfix++ ffmpeg gpac mplayer handbrake gstreamer avidemux mlt
+#
+# Note: These are example commands.
 
 MISSING_TOOLS=()
 for tool in "${REQUIRED_TOOLS[@]}"; do
